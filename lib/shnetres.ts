@@ -15,6 +15,8 @@ export interface ShNetResProps {
 export class ShNetRes extends Construct {
   constructor(scope: Construct, id: string, props: ShNetResProps) {
       super(scope, id);
+
+      const region = process.env.CDK_DEFAULT_REGION;
       
       const appVpc = ec2.Vpc.fromLookup(this, 'AppVpc', {vpcId: props.appVpcId});
       // Security Group
@@ -27,18 +29,19 @@ export class ShNetRes extends Construct {
       epSG.addIngressRule(ec2.Peer.ipv4(appVpc.vpcCidrBlock), ec2.Port.tcp(443), 'Allow 443');
 
       // VPC Endpoints
-      /*
-      appVpc.addGatewayEndpoint('s3-gw', {
-        service: ec2.GatewayVpcEndpointAwsService.S3,
-            subnets: [
-                {
-                    subnetFilters: [
-                        ec2.SubnetFilter.byIds([ props.appInstanceSubnetId1, props.appInstanceSubnetId2 ])
-                    ]
-                }
-            ]
+      const selectedSubnets = this.appVpc.selectSubnets({
+        subnetFilters: [
+          ec2.SubnetFilter.availabilityZones([ 'us-east-1a' ])
+        ]
       });
-      */
+      const privSubnet = selectedSubnets.subnets[0];
+      const rtb = privSubnet.routeTable;
+      const s3GWEP = new ec2.CfnVPCEndpoint(this, 's3-ep', {
+        routeTableIds: [ rtb.routeTableId ],
+        serviceName: `com.amazonaws.${region}.s3`,
+        vpcId: props.appVpcId
+      });
+
       appVpc.addInterfaceEndpoint('ssm-ep', {
         service: ec2.InterfaceVpcEndpointAwsService.SSM,
         securityGroups: [ epSG ],

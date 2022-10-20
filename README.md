@@ -19,8 +19,6 @@ This is project deploys:
   - tgwId
 
 ### Manual Steps
-- Create S3 VPC Gateway Endpoint manually
-  - At the moment, CDK seems to have a defect on this
 - Mandatory Parameters
 ```
 cdk deploy --parameters InboundCidr=11.0.0.0/16 --parameters AppDBUser=appuser --parameters AppDBPwd=s3cr3t123 --parameters AppBucket=rd-dd-dev-bucket1 --parameters AppKey=nodejs_mysql.zip
